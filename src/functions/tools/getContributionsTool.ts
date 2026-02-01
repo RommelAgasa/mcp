@@ -1,5 +1,5 @@
 import { app, arg, InvocationContext } from "@azure/functions";
-import { IN_MEMORY_CONTRIBUTIONS } from "./contributionData";
+import { IN_MEMORY_CONTRIBUTIONS } from "../data/contributionData";
 
 // Constants
 const GET_CONTRIBUTIONS_TOOL_NAME = "get_contributions";

@@ -1,0 +1,70 @@
+// Shared mock data for contribution tools
+
+export const MOCK_MEMBERS = [
+  { member_id: "mem_1", first_name: "Marcus", last_name: "Thorne", full_name: "Marcus Thorne" },
+  { member_id: "mem_2", first_name: "Alice", last_name: "Example", full_name: "Alice Example" },
+  { member_id: "mem_3", first_name: "Myle", last_name: "Disamper", full_name: "Myle Disamper" },
+];
+
+export const IN_MEMORY_CONTRIBUTIONS = [
+  {
+    contribution_id: "contrib_1",
+    member_id: "mem_1",
+    author_name: "Marcus Thorne",
+    project_id: "sorsogon-community-innovation-labs",
+    summary: "Implemented core data pipeline",
+    description: "Built the initial data collection and processing pipeline for community engagement tracking",
+    attachment_url: null,
+    created_date: "2024-01-15",
+  },
+  {
+    contribution_id: "contrib_2",
+    member_id: "mem_2",
+    author_name: "Alice Example",
+    project_id: "sorsogon-community-innovation-labs",
+    summary: "Dashboard UI development",
+    description: "Created responsive dashboard interface for project monitoring",
+    attachment_url: "https://example.com/dashboard-design.pdf",
+    created_date: "2024-01-20",
+  },
+  {
+    contribution_id: "contrib_3",
+    member_id: "mem_3",
+    author_name: "Myle Disamper",
+    project_id: "digital-transformation-initiative",
+    summary: "API endpoints documentation",
+    description: "Comprehensive documentation of all REST API endpoints",
+    attachment_url: null,
+    created_date: "2024-01-25",
+  },
+  {
+    contribution_id: "contrib_4",
+    member_id: "mem_1",
+    author_name: "Marcus Thorne",
+    project_id: "digital-transformation-initiative",
+    summary: "Database optimization",
+    description: "Optimized database queries reducing response time by 40%",
+    attachment_url: null,
+    created_date: "2024-02-01",
+  },
+  {
+    contribution_id: "contrib_5",
+    member_id: "mem_2",
+    author_name: "Alice Example",
+    project_id: "community-engagement-program",
+    summary: "Social media integration",
+    description: "Integrated social media APIs for community outreach",
+    attachment_url: "https://example.com/social-integration.pdf",
+    created_date: "2024-02-05",
+  },
+  {
+    contribution_id: "contrib_6",
+    member_id: "mem_3",
+    author_name: "Myle Disamper",
+    project_id: "community-engagement-program",
+    summary: "Event management system",
+    description: "Developed event scheduling and management module",
+    attachment_url: null,
+    created_date: "2024-02-10",
+  },
+];

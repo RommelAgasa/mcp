@@ -11,13 +11,16 @@ languages:
 products:
 - azure-functions
 - azure
+- azure-ai-foundry
 page_type: sample
 urlFragment: remote-mcp-functions-typescript
 ---
 -->
-# Getting Started with Remote MCP Servers using Azure Functions (Node.js/TypeScript)
+# Contribution Tracking MCP Server - Azure Functions
 
-This is a quickstart template to easily build and deploy a custom remote MCP server to the cloud using Azure functions. You can clone/restore/run on your local machine with debugging, and `azd up` to have it in the cloud in a couple minutes.  The MCP server is secured by design using keys and HTTPs, and allows more options for OAuth using EasyAuth and/or API Management as well as network isolation using VNET. 
+This project demonstrates a production-ready remote MCP (Model Context Protocol) server deployed on Azure Functions. It provides tools for managing project contributions, integrated with Azure AI Foundry for seamless AI model collaboration. 
+
+The server runs locally with full debugging support and deploys to Azure in minutes using `azd up`. It's secured by design with HTTPs and system key authentication, with additional options for OAuth via EasyAuth and API Management. 
 
 **Watch the video overview**
 
@@ -38,160 +41,200 @@ Below is the architecture diagram for the Remote MCP Server using Azure Function
 + [Node.js](https://nodejs.org/en/download/) version 18 or higher
 + [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local?pivots=programming-language-javascript#install-the-azure-functions-core-tools) >= `4.0.7030`
 + [Azure Developer CLI](https://aka.ms/azd)
-+ To use Visual Studio Code to run and debug locally:
-  + [Visual Studio Code](https://code.visualstudio.com/)
++ [Visual Studio Code](https://code.visualstudio.com/) (recommended)
   + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions)
-+ [Docker](https://www.docker.com/) to run Azurite, the Azure Storage Emulator (optional)
+  + [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) (optional, for testing with Copilot Chat)
 
 ## Prepare your local environment
 
-An Azure Storage Emulator is needed for this particular sample because we will save and get snippets from blob storage. 
-
-1. Start Azurite
-
-    ```shell
-    docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 \
-        mcr.microsoft.com/azure-storage/azurite
-    ```
-
->**Note** if you use Azurite coming from VS Code extension you need to run `Azurite: Start` now or you will see errors.
-
-## Run your MCP Server locally from the terminal
-
-1. Install dependencies
+1. Clone or navigate to your project directory
+2. Install dependencies:
    ```shell
    npm install
    ```
 
-1. Build the project
+## Available MCP Tools
+
+This MCP server provides three tools for managing project contributions:
+
+- **`list_projects`** - Enumerate all projects with contribution counts and team member information
+- **`get_contributions`** - Filter and retrieve contributions by project name or team member
+- **`add_contribution`** - Record a new contribution with project, member, summary, and optional attachments
+
+## Run your MCP Server locally from the terminal
+
+1. Install dependencies (if not already done)
+   ```shell
+   npm install
+   ```
+
+2. Build the project
    ```shell
    npm run build
    ```
 
-1. Start the Functions host locally:
+3. Start the Functions host locally:
    ```shell
    func start
    ```
 
-> **Note** by default this will use the webhooks route: `/runtime/webhooks/mcp`.  Later we will use this in Azure to set the key on client/host calls: `/runtime/webhooks/mcp?code=<system_key>`
+The local MCP endpoint will be available at: `http://0.0.0.0:7071/runtime/webhooks/mcp`
 
-## Use the *local* MCP server from within a client/host
+> **Note**: In Azure, the endpoint includes authentication: `/runtime/webhooks/mcp?code=<system_key>`
 
-### VS Code - Copilot Edits
+## Test the MCP Server locally
 
-1. **Add MCP Server** from command palette and add URL to your running Function app's mcp endpoint:
-    ```shell
-    http://0.0.0.0:7071/runtime/webhooks/mcp
-    ```
-
-1. Select **HTTP (Server-Sent-Events)** for the type of MCP server to add.
-1. Enter the URL to your running function app's mcp endpoint
-1. Enter the server ID. (This can be any name you want)
-1. Choose if you want to run this in your User settings (available to all apps for you) or to your Workspace settings (available to this app, only)
-1. **List MCP Servers** from command palette and start the server. The previous step may have already started your local server. If so, you can skip this step.
-1. In Copilot chat agent mode enter a prompt to trigger the tool, e.g., select some code and enter this prompt
-
-    ```plaintext
-    Say Hello
-    ```
-
-    ```plaintext
-    Save this snippet as snippet1 
-    ```
-
-    ```plaintext
-    Retrieve snippet1 and apply to newFile.ts
-    ```
-1. When prompted to run the tool, consent by clicking **Continue**
-
-1. When you're done, press Ctrl+C in the terminal window to stop the `func.exe` host process, and **List MCP Servers** from command palette and stop the local server.
-
-### MCP Inspector
+### Using MCP Inspector
 
 1. In a **new terminal window**, install and run MCP Inspector
 
     ```shell
     npx @modelcontextprotocol/inspector node build/index.js
     ```
-    
-1. If you stopped your function app previously, start the Functions host locally:
 
-   ```shell
-   func start
-   ```
-
-1. CTRL click to load the MCP Inspector web app from the URL displayed by the app (e.g. http://0.0.0.0:5173/#resources)
-1. Set the transport type to `http` 
-1. Set the URL to your running Function app's mcp endpoint and **Connect**:
-    ```shell
+2. CTRL+Click the displayed URL (typically `http://0.0.0.0:5173/#resources`) to open MCP Inspector
+3. Set the transport type to `http` 
+4. Set the URL to your local MCP endpoint:
+    ```
     http://0.0.0.0:7071/runtime/webhooks/mcp
     ```
-1. **List Tools**.  Click on a tool and **Run Tool**.  
+5. Click **Connect** and then **List Tools** to see all available tools
+6. Test each tool by clicking it and providing sample parameters:
+   - **list_projects** - No parameters needed, returns all projects
+   - **get_contributions** - Optional: filter by `project_name` or `author_name`
+   - **add_contribution** - Required: `MemberId`, `ProjectId`, `Summary`, `Description`; Optional: `AttachmentUrl`
 
-1. When you're done, press Ctrl+C in the terminal window to stop the `func.exe` host process, and press Ctrl+C in the terminal window to stop the `@modelcontextprotocol/inspector` host process.
+When finished, press `Ctrl+C` in both terminal windows to stop the processes.
 
-## Verify local blob storage in Azurite
+### Using VS Code GitHub Copilot
 
-After testing the snippet save functionality locally, you can verify that blobs are being stored correctly in your local Azurite storage emulator.
-
-### Using Azure Storage Explorer
-
-1. Open Azure Storage Explorer
-1. In the left panel, expand **Emulator & Attached** → **Storage Accounts** → **(Emulator - Default Ports) (Key)**
-1. Navigate to **Blob Containers** → **snippets**
-1. You should see any saved snippets as blob files in this container
-1. Double-click on any blob to view its contents and verify the snippet data was saved correctly
-
-### Using Azure CLI (Alternative)
-
-If you prefer using the command line, you can also verify blobs using Azure CLI with the storage emulator:
-
-```shell
-# List blobs in the snippets container
-az storage blob list --container-name snippets --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
-```
-
-```shell
-# Download a specific blob to view its contents
-az storage blob download --container-name snippets --name <blob-name> --file <local-file-path> --connection-string "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
-```
-
-This verification step ensures your MCP server is correctly interacting with the local storage emulator and that the blob storage functionality is working as expected before deploying to Azure.
+1. Start the Functions host locally (as shown above)
+2. In VS Code, open the Chat panel with GitHub Copilot
+3. Ask Copilot to use the MCP tools:
+   ```
+   List all the projects we have
+   ```
+   ```
+   Show me all contributions from Marcus Thorne
+   ```
+   ```
+   Add a new contribution to the Sorsogon Community Innovation Labs project
+   ```
+4. When prompted, click **Continue** to allow the tool execution
+5. Copilot will execute the MCP tool and display the results
 
 ## Deploy to Azure for Remote MCP
 
-Optionally, you can opt-in to a VNet being used in the sample. (If you choose this, do this before `azd up`)
+Optionally, enable VNet for additional network isolation before deployment:
 
 ```bash
 azd env set VNET_ENABLED true
 ```
 
-Run these [azd](https://aka.ms/azd) commands to provision the function app, with any required Azure resources, and deploy your code:
+Run these [azd](https://aka.ms/azd) commands to provision Azure resources and deploy your code:
 
 ```shell
 azd provision
 ```
 
-Wait a few minutes for access permissions to take effect, then run 
+Wait a few minutes for access permissions to take effect, then deploy:
 
 ```shell
 azd deploy
 ```
 
-> **Note** [API Management](https://aka.ms/mcp-remote-apim-auth) can be used for improved security and policies over your MCP Server, and [App Service built-in authentication](https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization) can be used to set up your favorite OAuth provider including Entra.  
+This will:
+- Create an Azure Function App with your MCP server
+- Set up all required infrastructure (App Service plan, Storage, etc.)
+- Deploy your TypeScript code to Azure
+- Configure the MCP system key for secure access
 
-## Connect to your *remote* MCP server function app from a client
+> **Note** [API Management](https://aka.ms/mcp-remote-apim-auth) and [App Service built-in authentication](https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization) can be used for enhanced security and OAuth provider integration.  
 
-Your client will need a key in order to invoke the new hosted SSE endpoint, which will be of the form `https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp`. The hosted function requires a system key by default which can be obtained from the [portal](https://learn.microsoft.com/en-us/azure/azure-functions/function-keys-how-to?tabs=azure-portal) or the CLI (`az functionapp keys list --resource-group <resource_group> --name <function_app_name>`). Obtain the system key named `mcp_extension`.
+## Get your MCP System Key
 
-### Connect to remote MCP server in MCP Inspector
-For MCP Inspector, you can include the key in the URL: 
-```plaintext
+After `azd deploy` completes, you need the MCP system key to authenticate requests. 
+
+### Option 1: Get from Azure CLI (Recommended)
+
+```shell
+# Get your function app name from azd
+FUNCTION_APP_NAME=$(azd env get-values | grep AZURE_FUNCTION_APP_NAME | cut -d'=' -f2)
+RESOURCE_GROUP=$(azd env get-values | grep AZURE_RESOURCE_GROUP | cut -d'=' -f2)
+
+# Retrieve the mcp_extension system key
+MCP_KEY=$(az functionapp keys list \
+  --resource-group $RESOURCE_GROUP \
+  --name $FUNCTION_APP_NAME \
+  --query "systemKeys.mcp_extension" -o tsv)
+
+echo "MCP Extension Key: $MCP_KEY"
+```
+
+### Option 2: Get from Azure Portal
+
+1. Go to [Azure Portal](https://portal.azure.com/)
+2. Search for your Function App (name from `azd env get-values`)
+3. Navigate to **Functions** → **App Keys** 
+4. Copy the `mcp_extension` key from the **System Keys** section
+
+## Connect to your *remote* MCP server in Azure
+
+After deployment, your MCP server is accessible at:
+```
 https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp?code=<your-mcp-extension-system-key>
 ```
 
-### Connect to remote MCP server in VS Code - GitHub Copilot
-For GitHub Copilot within VS Code, you should set the key as the `x-functions-key` header in `mcp.json`, and you would use `https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp` for the URL. The following example is from the `mcp.json` file included in this repository and uses an input to prompt you to provide the key when you start the server from VS Code.  Your `mcp.json` file looks like this:
+**Example with actual values:**
+```
+https://mcp-scil-aegccgcze5bsdkez.azurewebsites.net/runtime/webhooks/mcp?code=X9kL2mN5pQ8rT3vW6xY1zA4bC7dE0fG9hI2jK5mL8nO1pR4sT7uV0wX3yZ6aB9cD==
+```
+
+### Test in MCP Inspector
+
+Use the key in the URL:
+```
+https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp?code=<your-mcp-extension-system-key>
+```
+
+### Connect in Azure AI Foundry
+
+1. Go to [Azure AI Foundry](https://ai.azure.com/)
+2. Create or open your AI project
+3. Navigate to **Tools** → **MCP Servers**
+4. Add your remote MCP server with:
+   - **URL**: `https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp`
+   - **Headers**: `x-functions-key: <your-mcp-extension-system-key>`
+5. Your AI models can now call the `list_projects`, `get_contributions`, and `add_contribution` tools
+
+#### Configure Agent with Context
+
+To help your AI agent understand how to use the MCP tools effectively:
+
+1. Create a new **Agent** in your project
+2. In the **Configuration** panel, set:
+   - **Display name**: "Contribution Manager"
+   - **Description**: 
+     ```
+     A contribution tracking assistant that helps manage project contributions 
+     across the Sorsogon Community Innovation Labs ecosystem. I can help you:
+     - List all available projects and see who's contributing
+     - Search for specific contributions by project or team member
+     - Record new contributions with details like summary, description, and attachments
+     
+     Use me to track community engagement, project progress, and team member activities.
+     ```
+   - **Starter prompts** (optional examples):
+     1. "List all projects and show me the contribution counts"
+     2. "Show me all contributions from Marcus Thorne"
+     3. "Add a new contribution to the Sorsogon Community Innovation Labs project"
+
+3. Enable the MCP tools in your agent's **Tools** configuration
+4. Test the agent with your starter prompts
+
+### Connect in VS Code GitHub Copilot
+
+Set up in your `mcp.json`:
 
 ```json
 {
@@ -205,7 +248,7 @@ For GitHub Copilot within VS Code, you should set the key as the `x-functions-ke
         {
             "type": "promptString",
             "id": "functionapp-name",
-            "description": "Azure Functions App Name"
+            "description": "Azure Function App Name"
         }
     ],
     "servers": {
@@ -215,41 +258,21 @@ For GitHub Copilot within VS Code, you should set the key as the `x-functions-ke
             "headers": {
                 "x-functions-key": "${input:functions-mcp-extension-system-key}"
             }
-        },
-        "local-mcp-function": {
-            "type": "http",
-            "url": "http://0.0.0.0:7071/runtime/webhooks/mcp"
         }
     }
 }
 ```
 
-1. Click Start on the server `remote-mcp-function`, inside the `mcp.json` file:
+## Redeploy your code updates
 
-1. Enter the name of the function app that you created in the Azure Portal, when prompted by VS Code.
+After making changes to your MCP tools or handlers, rebuild and redeploy:
 
-1. Enter the `Azure Functions MCP Extension System Key` into the prompt. You can copy this from the Azure portal for your function app by going to the Functions menu item, then App Keys, and copying the `mcp_extension` key from the System Keys.
+```shell
+npm run build
+azd deploy
+```
 
-1. In Copilot chat agent mode enter a prompt to trigger the tool, e.g., select some code and enter this prompt
-
-    ```plaintext
-    Say Hello
-    ```
-
-    ```plaintext
-    Save this snippet as snippet1 
-    ```
-
-    ```plaintext
-    Retrieve snippet1 and apply to newFile.ts
-    ```
-
-## Redeploy your code
-
-You can run the `azd deploy` command as many times as you need to deploy code updates to your function app.
-
->[!NOTE]
->Deployed code files are always overwritten by the latest deployment package.
+> **Note**: Your function app code is always updated with the latest deployment package. No manual file replacement needed.
 
 ## Clean up resources
 
@@ -259,128 +282,29 @@ When you're done working with your function app and related resources, you can u
 azd down
 ```
 
-## Source Code
+## Source Code Structure
 
-The function code for the `getSnippet` and `saveSnippet` endpoints are defined in the TypeScript files in the `src` directory. The MCP function annotations expose these functions as MCP Server tools.
+The MCP server is organized with Azure Functions' native decorator pattern:
 
-This shows the code for a few MCP server examples (get string, get object, save object):
-
-```typescript
-// Hello function - responds with hello message
-export async function mcpToolHello(context: InvocationContext): Promise<string> {
-    return "Hello I am MCP Tool!";
-}
-
-// Register the hello tool
-app.mcpTool('hello', {
-    toolName: 'hello',
-    description: 'Simple hello world MCP Tool that responses with a hello message.',
-    handler: mcpToolHello
-});
-
-// GetSnippet function - retrieves a snippet by name
-export async function getSnippet(_message: unknown, context: InvocationContext): Promise<string> {
-    console.info('Getting snippet');
-    
-    // Get snippet name from the tool arguments
-    const mcptoolargs = context.triggerMetadata.mcptoolargs as { snippetname?: string };
-    const snippetName = mcptoolargs?.snippetname;
-
-    console.info(`Snippet name: ${snippetName}`);
-    
-    if (!snippetName) {
-        return "No snippet name provided";
-    }
-    
-    // Get the content from blob binding - properly retrieving from extraInputs
-    const snippetContent = context.extraInputs.get(blobInputBinding);
-    
-    if (!snippetContent) {
-        return `Snippet '${snippetName}' not found`;
-    }
-    
-    console.info(`Retrieved snippet: ${snippetName}`);
-    return snippetContent as string;
-}
-
-
-// Register the GetSnippet tool
-app.mcpTool('getsnippet', {
-    toolName: GET_SNIPPET_TOOL_NAME,
-    description: GET_SNIPPET_TOOL_DESCRIPTION,
-    toolProperties: [
-        {
-            propertyName: SNIPPET_NAME_PROPERTY_NAME,
-            propertyValue: PROPERTY_TYPE,
-            description: SNIPPET_NAME_PROPERTY_DESCRIPTION,
-        }
-    ],
-    extraInputs: [blobInputBinding],
-    handler: getSnippet
-});
-
-// SaveSnippet function - saves a snippet with a name
-export async function saveSnippet(_message: unknown, context: InvocationContext): Promise<string> {
-    console.info('Saving snippet');
-    
-    // Get snippet name and content from the tool arguments
-    const mcptoolargs = context.triggerMetadata.mcptoolargs as { 
-        snippetname?: string;
-        snippet?: string;
-    };
-    
-    const snippetName = mcptoolargs?.snippetname;
-    const snippet = mcptoolargs?.snippet;
-    
-    if (!snippetName) {
-        return "No snippet name provided";
-    }
-    
-    if (!snippet) {
-        return "No snippet content provided";
-    }
-    
-    // Save the snippet to blob storage using the output binding
-    context.extraOutputs.set(blobOutputBinding, snippet);
-    
-    console.info(`Saved snippet: ${snippetName}`);
-    return snippet;
-}
-
-// Register the SaveSnippet tool
-app.mcpTool('savesnippet', {
-    toolName: SAVE_SNIPPET_TOOL_NAME,
-    description: SAVE_SNIPPET_TOOL_DESCRIPTION,
-    toolProperties: [
-        {
-            propertyName: SNIPPET_NAME_PROPERTY_NAME,
-            propertyValue: PROPERTY_TYPE,
-            description: SNIPPET_NAME_PROPERTY_DESCRIPTION,
-        },
-        {
-            propertyName: SNIPPET_PROPERTY_NAME,
-            propertyValue: PROPERTY_TYPE,
-            description: SNIPPET_PROPERTY_DESCRIPTION,
-        }
-    ],
-    extraOutputs: [blobOutputBinding],
-    handler: saveSnippet
-});
 ```
-
-Note that the `host.json` file also includes a reference to the extension bundle, which is required for apps using this feature:
-
-```json
-"extensionBundle": {
-  "id": "Microsoft.Azure.Functions.ExtensionBundle",
-  "version": "[4.*, 5.0.0)"
-}
+src/
+├── index.ts                 # Entry point - imports all tools
+├── functions/
+│   ├── data/
+│   │   └── contributionData.ts    # Shared mock data (projects, contributions, members)
+│   └── tools/
+│       ├── listProjectsTool.ts    # list_projects MCP tool handler
+│       ├── addContributionTool.ts # add_contribution MCP tool handler
+│       └── getContributionsTool.ts# get_contributions MCP tool handler
 ```
 
 ## Next Steps
 
-- Add [API Management](https://aka.ms/mcp-remote-apim-auth) to your MCP server (auth, gateway, policies, more!)
-- Add [built-in auth](https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization) to your MCP server
-- Enable VNET using VNET_ENABLED=true flag
-- Learn more about [related MCP efforts from Microsoft](https://github.com/microsoft/mcp/tree/main/Resources)
+- **Enhance Functionality**: Add more tools for project management or analytics
+- **Persist Data**: Replace in-memory mock data with a database (Cosmos DB, SQL, etc.)
+- **Add Security**: Enable [Azure API Management](https://aka.ms/mcp-remote-apim-auth) or [App Service authentication](https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization)
+- **Enable VNet**: Use `azd env set VNET_ENABLED true` for network isolation
+- **Monitor & Log**: Check Azure Application Insights for tool usage patterns
+- **Scale**: Optimize performance with higher tier App Service plans
+- **Learn more**: Explore [MCP documentation](https://modelcontextprotocol.io) and [Azure Functions with MCP](https://learn.microsoft.com/en-us/azure/azure-functions/functions-mcp)
 

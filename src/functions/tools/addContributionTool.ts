@@ -1,6 +1,6 @@
 import { app, arg, InvocationContext } from "@azure/functions";
 import { v4 as uuidv4 } from "uuid";
-import { MOCK_MEMBERS, IN_MEMORY_CONTRIBUTIONS } from "./contributionData";
+import { MOCK_MEMBERS, IN_MEMORY_CONTRIBUTIONS } from "../data/contributionData";
 
 // Constants
 const ADD_CONTRIBUTION_TOOL_NAME = "add_contribution";
@@ -22,7 +22,6 @@ async function addContributionHandler(_toolArguments: unknown, context: Invocati
   if (!args.ProjectId) missing.push("ProjectId");
   if (!args.Summary) missing.push("Summary");
   if (!args.Description) missing.push("Description");
-  if (!args.AttachmentUrl) missing.push("AttachmentUrl");
 
   if (missing.length) {
     return JSON.stringify({ error: `Missing required fields: ${missing.join(", ")}` });
@@ -31,30 +30,25 @@ async function addContributionHandler(_toolArguments: unknown, context: Invocati
   // Lookup member
   const member = MOCK_MEMBERS.find((m) => m.member_id === args.MemberId);
 
-  // Create contribution
+  // Create contribution with matching field names
   const contribution = {
-    id: uuidv4(),
-    project_id: args.ProjectId,
+    contribution_id: uuidv4(),
+    member_id: args.MemberId,
     author_name: member ? member.full_name : args.MemberId,
-    member_id: member ? member.member_id : args.MemberId,
-    message: args.Description,
-    contribution_title: args.Summary,
-    attachmentUrl: args.AttachmentUrl,
-    receivedAt: new Date().toISOString(),
+    project_id: args.ProjectId,
+    summary: args.Summary,
+    description: args.Description,
+    attachment_url: args.AttachmentUrl || null,
+    created_date: new Date().toISOString().split('T')[0],
   };
 
   IN_MEMORY_CONTRIBUTIONS.push(contribution);
-
-  const baseUrl = process.env.MCP_HTTP_BASE_URL || "http://localhost:3000";
-  const createdContributionLink = `${baseUrl.replace(/\/$/, "")}/contributions/${contribution.id}`;
 
   return JSON.stringify({
     status: "success",
     message: "Contribution added successfully",
     verified_member: !!member,
     contribution,
-    createdContributionLink,
-    known_members_sample: MOCK_MEMBERS.slice(0, 3),
   });
 }
 
